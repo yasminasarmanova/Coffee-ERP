@@ -169,6 +169,6 @@ The application uses strict typing for delivery statuses. Main statuses: In Tran
 
 The goal of this project is to automate coffee shop operations including inventory management, logistics tracking, and analytics.
 
-##І Author 
+### Author 
 **Yasmina Sarmanova** 
 Semester project for the Web Application / IT Project course.
