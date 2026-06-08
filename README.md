@@ -17,7 +17,7 @@ The application follows a client-server architecture.
 - Frontend: React + TypeScript single-page application built with Vite.
 - Backend Services: Supabase for authentication and database operations.
 - Database: PostgreSQL hosted by Supabase.
-- Deployment: Docker containerization for consistent execution across different environments.
+- Deployment: Vercel (free hosting with GitHub integration and automatic CI/CD).
 
 The frontend communicates with Supabase through its client SDK to manage authentication and inventory data.
 ## Technologies Used
@@ -29,8 +29,8 @@ The frontend communicates with Supabase through its client SDK to manage authent
 - **Tailwind CSS**: Responsive interface design.
 
 ### Backend & Database
-- **Supabase**: PostgreSQL database integration and user authentication.
-- **TypeScript**: Unified type system across client and server.
+- **Supabase** – backend-as-a-service (authentication, database, API)
+- **PostgreSQL** – database engine
 
 ### DevOps & Infrastructure
 - **Docker & Docker Compose**: Containerization for environment portability.
@@ -109,7 +109,7 @@ npm install
 npm run dev
 ```
 ## Running with Docker
-To deploy in an isolated environment:
+To run the project locally in an isolated environment using Docker
 ```
 ### Build and run containers
 docker compose up --build
@@ -150,13 +150,12 @@ To run the project correctly, the following environment variables are required:
 
 ## Supabase Configuration
 
-In Supabase dashboard:
-
-Authentication → URL Configuration
+In Supabase Dashboard:
+Authentication → URL Configuration → Add your Vercel domain
 
 Add:
 
-https://coffee-erp-six.vercel.app/
+https://coffee-erp-six.vercel.app
 
 ## Logic Highlights
 The application uses strict typing for delivery statuses. Main statuses: In Transit, Delivered. The system automatically tracks transit time and updates dashboard information, ensuring data consistency. Testing the functionality has been verified through manual testing:
@@ -166,4 +165,10 @@ The application uses strict typing for delivery statuses. Main statuses: In Tran
 - UI stability during status updates.
 - Successful container startup via Docker.
 
-*Author: Semester project for the Web Application Development course.*
+## Project Goal
+
+The goal of this project is to automate coffee shop operations including inventory management, logistics tracking, and analytics.
+
+## Author: 
+Yasmina Sarmanova 
+Semester project for the Web Application / IT Project course.
