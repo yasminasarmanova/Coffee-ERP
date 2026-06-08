@@ -1,73 +1,169 @@
-# React + TypeScript + Vite
+# Coffee ERP System
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Coffee ERP is a specialized web application designed for managing coffee shop business processes. It automates inventory tracking and supply chain coordination, ensuring efficient logistics management.
 
-Currently, two official plugins are available:
+## Key Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- User Authentication: Secure user registration and login.
+- **Inventory Dashboard**: Real-time management of ingredient stock levels.
+- **Logistics Module**: Visual supply calendar, status tracking (In Transit, Delivered), and automated ETA calculation.
+- **Analytics**: Analyzing stock usage trends and planning future procurement.
+- **Interactive Interface**: Intuitive forms for updating order statuses and managing data.
+  
+## Architecture
 
-## React Compiler
+The application follows a client-server architecture.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Frontend: React + TypeScript single-page application built with Vite.
+- Backend Services: Supabase for authentication and database operations.
+- Database: PostgreSQL hosted by Supabase.
+- Deployment: Docker containerization for consistent execution across different environments.
 
-## Expanding the ESLint configuration
+The frontend communicates with Supabase through its client SDK to manage authentication and inventory data.
+## Technologies Used
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Frontend
+- **React**: Primary UI framework.
+- **TypeScript**: Static typing for robust code.
+- **Vite**: Build tool for fast development.
+- **Tailwind CSS**: Responsive interface design.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### Backend & Database
+- **Supabase**: PostgreSQL database integration and user authentication.
+- **TypeScript**: Unified type system across client and server.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### DevOps & Infrastructure
+- **Docker & Docker Compose**: Containerization for environment portability.
+- **Git**: Version control.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Key Dependencies
+| Dependency | Purpose |
+| --- | --- |
+| `@supabase/supabase-js` | Client library for database operations and authentication |
+| `react-icons` | Library for scalable UI icons |
+| `recharts` | Library for building responsive data visualization charts |
+| `sass` | Preprocessor for advanced CSS styling |
+## Project Structure
+```
+COFFEE/
+|-- public/              # Static assets
+|-- src/
+|   |-- assets/          # Icons and images
+|   |-- components/      # UI components (Analytics, Auth, Logistics, ProductList)
+|   |-- layout/          # Layout component
+|   |-- App.tsx          # Main application component
+|   |-- main.tsx         # Application entry point
+|   |-- styles.scss      # Global styles
+|   |-- supabaseClient.ts # Supabase configuration
+|   `-- types.ts         # TypeScript definitions
+|-- Dockerfile           # Build instructions
+|-- docker-compose.yml   # Container configuration
+|-- package.json         # Dependencies and scripts
+`-- README.md            # Project documentation
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## API & Database Integration
+The application uses the Supabase JavaScript SDK to interact with the PostgreSQL database.
+All data operations (CRUD) are performed through Supabase client methods, which internally communicate with the Supabase REST (PostgREST) API.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Example:
+```ts
+supabase.from("products").select("*")
 ```
+Security (RLS)
+
+The application uses Row Level Security (RLS) provided by Supabase.
+
+This ensures that:
+
+- users can only access their own data
+- all database requests are validated using JWT authentication
+- unauthorized access is automatically blocked at the database level
+
+## Data Architecture
+```mermaid
+flowchart TD
+    User --> UI
+    UI[React Components]
+    Logic[TypeScript Logic and Hooks]
+    API[Supabase Client SDK]
+    DB[PostgreSQL Database]
+    Auth[Supabase Auth JWT]
+
+    UI --> Logic
+    Logic --> API
+    API --> DB
+    DB --> API
+    API --> UI
+
+    User --> Auth
+    Auth --> API
+```
+
+## Installation & Running Local Development
+```
+### Install dependencies
+npm install
+
+### Run in development mode
+npm run dev
+```
+## Running with Docker
+To deploy in an isolated environment:
+```
+### Build and run containers
+docker compose up --build
+```
+The application will be accessible at http://localhost:3000.
+
+# Implementation – on free hosting (Vercel)
+
+This project is deployed using a free hosting platform to ensure easy access and fast deployment without additional costs.
+
+The application is hosted on **Vercel**, which provides seamless integration with GitHub and automatic deployments.
+
+## Deployment Platform
+
+The project is deployed on:
+
+**Vercel**
+
+## Live Demo
+
+https://coffee-erp-six.vercel.app/
+
+## How it was implemented
+
+- Frontend built with React + Vite
+- Authentication handled via Supabase
+- Hosted using Vercel free tier
+- Continuous deployment connected to GitHub repository
+
+## Environment Variables (Vercel)
+
+To run the project correctly, the following environment variables are required:
+
+| Key | Description |
+|-----|------------|
+| VITE_SUPABASE_URL | Supabase project URL |
+| VITE_SUPABASE_ANON_KEY | Supabase public API key |
+
+## Supabase Configuration
+
+In Supabase dashboard:
+
+Authentication → URL Configuration
+
+Add:
+
+https://coffee-erp-six.vercel.app/
+
+## Logic Highlights
+The application uses strict typing for delivery statuses. Main statuses: In Transit, Delivered. The system automatically tracks transit time and updates dashboard information, ensuring data consistency. Testing the functionality has been verified through manual testing:
+
+- Data retrieval from the database.
+- Logistics module filter functionality.
+- UI stability during status updates.
+- Successful container startup via Docker.
+
+*Author: Semester project for the Web Application Development course.*
