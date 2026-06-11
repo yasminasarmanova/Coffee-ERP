@@ -26,9 +26,15 @@ export default function Logistics({ products, onUpdateProduct }: LogisticsProps)
 
   const inTransitCount = products.filter(p => p.delivery_status === "In Transit" && p.transport_time > 1).length;
   const todayCount = products.filter(p => p.delivery_status === "In Transit" && p.transport_time === 1).length;
-// Считаем просроченным любой товар с отрицательным временем
-// независимо от того, что написано в статусе
-const overdueCount = products.filter(p => p.transport_time < 0).length;
+
+  const overdueCount = products.filter(p => {
+  if (p.delivery_status !== "In Transit") return false;
+
+  const arrivalDate = new Date();
+  arrivalDate.setDate(today.getDate() + p.transport_time);
+
+  return arrivalDate < new Date();
+}).length;
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
   const calendarDays = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
@@ -314,3 +320,5 @@ const handleReceiveShipment = async (product: Product) => {
     </div>
   );
 }
+
+

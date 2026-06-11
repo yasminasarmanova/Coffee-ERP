@@ -18,7 +18,9 @@ function App() {
     supplier: "",
     transportTime: "",
   });
-
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const [totalCount, setTotalCount] = useState(0);
   const [editId, setEditId] = useState<number | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [sortBy, setSortBy] = useState<string>("none");
@@ -42,7 +44,7 @@ function App() {
     }
   }, [session]);
 
-  const totalProducts = products.length;
+const totalProducts = totalCount;
   const totalStock = products.reduce((sum, p) => sum + p.quantity, 0);
   const lowStock = products.filter((p) => p.quantity < 10).length;
 
@@ -53,45 +55,63 @@ function App() {
             products.length
         )
       : 0;
+const totalPages = Math.ceil(totalCount / pageSize);
+const fetchProducts = async () => {
+  if (!session?.user?.id) return;
 
-  const fetchProducts = async () => {
-    if (!session?.user?.id) return;
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
 
-    let query = supabase
-      .from("products")
-      .select("*")
-      .eq("user_id", session.user.id);
+  let query = supabase
+    .from("products")
+    .select(
+      `
+      id,
+      name,
+      origin,
+      quantity,
+      supplier,
+      transport_time,
+      delivery_status
+      `,
+      { count: "exact" }
+    )
+    .eq("user_id", session.user.id);
 
-    if (sortBy === "quantity") {
-      query = query.order("quantity", { ascending: false });
-    } else if (sortBy === "name") {
-      query = query.order("name", { ascending: true });
-    }
+  // Server-side filtering
+  if (searchQuery.trim()) {
+    query = query.or(
+      `name.ilike.%${searchQuery}%,
+       origin.ilike.%${searchQuery}%,
+       supplier.ilike.%${searchQuery}%`
+    );
+  }
 
-    const { data } = await query;
-    setProducts(data || []);
-  };
+  // Sorting
+  if (sortBy === "quantity") {
+    query = query.order("quantity", { ascending: false });
+  } else if (sortBy === "name") {
+    query = query.order("name", { ascending: true });
+  }
 
-  useEffect(() => {
+  // Pagination
+  query = query.range(from, to);
+
+  const { data, error, count } = await query;
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+setProducts(data || []);
+setTotalCount(count || 0);
+};
+
+useEffect(() => {
   if (session) {
     fetchProducts();
   }
-}, [sortBy, session, currentTab]);
-
-  const filteredProducts = products.filter((product) => {
-    const query = searchQuery.toLowerCase().trim();
-    if (!query) return true;
-
-    const name = String(product.name ?? "").toLowerCase();
-    const origin = String(product.origin ?? "").toLowerCase();
-    const quantity = String(product.quantity ?? "").toLowerCase();
-    const supplier = String(product.supplier ?? "").toLowerCase();
-    const transportTime = String(product.transport_time ?? "").toLowerCase();
-
-    const visibleRowText = `${name} ${origin} ${quantity} ${supplier} ${transportTime}`;
-
-    return visibleRowText.includes(query);
-  });
+}, [sortBy, session, currentTab, page, searchQuery]);
 
   const resetForm = () => {
     setForm({ name: "", origin: "", quantity: "", supplier: "", transportTime: "" });
@@ -102,25 +122,53 @@ function App() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const addProduct = async () => {
-    if (!form.name.trim() || !session?.user?.id) return;
+ const addProduct = async () => {
+  if (!session?.user?.id) return;
 
-    await supabase.from("products").insert([
-      {
-        name: form.name,
-        origin: form.origin,
-        quantity: Number(form.quantity) || 0,
-        supplier: form.supplier,
-        transport_time: Number(form.transportTime) || 0,
-        user_id: session.user.id,
-        delivery_status: Number(form.transportTime) > 0 ? "In Transit" : "Delivered",
-      },
-    ]);
+  const quantity = Number(form.quantity);
+  const transportTime = Number(form.transportTime);
 
-    resetForm();
-    setShowModal(false);
-    fetchProducts();
-  };
+  if (!form.name.trim()) {
+    alert("Product name is required.");
+    return;
+  }
+
+  if (!form.origin.trim()) {
+    alert("Origin is required.");
+    return;
+  }
+
+  if (!form.supplier.trim()) {
+    alert("Supplier is required.");
+    return;
+  }
+
+  if (isNaN(quantity) || quantity < 0) {
+    alert("Quantity must be a valid positive number.");
+    return;
+  }
+
+  if (isNaN(transportTime) || transportTime < 0) {
+    alert("Transport time cannot be negative.");
+    return;
+  }
+
+  await supabase.from("products").insert([
+    {
+      name: form.name,
+      origin: form.origin,
+      quantity,
+      supplier: form.supplier,
+      transport_time: transportTime,
+      user_id: session.user.id,
+      delivery_status: transportTime > 0 ? "In Transit" : "Delivered",
+    },
+  ]);
+
+  resetForm();
+  setShowModal(false);
+  fetchProducts();
+};
 
   const deleteProduct = async (id: number) => {
     await supabase.from("products").delete().eq("id", id);
@@ -140,27 +188,44 @@ function App() {
   };
 
 const updateProduct = async () => {
-    if (!editId || !session?.user?.id) return;
+  if (!editId || !session?.user?.id) return;
 
-    const transportVal = Number(form.transportTime) || 0;
-    
-    await supabase
-      .from("products")
-      .update({
-        name: form.name,
-        origin: form.origin,
-        quantity: Number(form.quantity) || 0,
-        supplier: form.supplier,
-        transport_time: transportVal,
-        delivery_status: transportVal > 0 ? "In Transit" : "Delivered",
-        user_id: session.user.id,
-      })
-      .eq("id", editId);
+  const quantity = Number(form.quantity);
+  const transportVal = Number(form.transportTime);
 
-    resetForm();
-    setShowModal(false);
-    fetchProducts();
-  };
+  if (!form.name.trim()) {
+    alert("Product name is required.");
+    return;
+  }
+
+  if (quantity < 0 || isNaN(quantity)) {
+    alert("Quantity must be a valid positive number.");
+    return;
+  }
+
+  if (transportVal < 0 || isNaN(transportVal)) {
+    alert("Transport time cannot be negative.");
+    return;
+  }
+
+  await supabase
+    .from("products")
+    .update({
+      name: form.name,
+      origin: form.origin,
+      quantity,
+      supplier: form.supplier,
+      transport_time: transportVal,
+      delivery_status: transportVal > 0 ? "In Transit" : "Delivered",
+      user_id: session.user.id,
+    })
+    .eq("id", editId)
+    .eq("user_id", session.user.id);
+
+  resetForm();
+  setShowModal(false);
+  fetchProducts();
+};
 
   const handleUpdateProductFields = async (id: number, updates: Partial<Product>) => {
     if (!session?.user?.id) return;
@@ -187,7 +252,15 @@ const updateProduct = async () => {
   if (!session) {
     return <Auth />;
   }
+  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const value = Math.max(0, Number(e.target.value));
+  setForm({ ...form, quantity: String(value) });
 
+};
+  const handleTransportChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const value = Math.max(0, Number(e.target.value));
+  setForm({ ...form, transportTime: String(value) });
+};
   return (
     <div className="app">
       <aside className="sidebar">
@@ -261,9 +334,9 @@ const updateProduct = async () => {
                     <h3>{editId ? "Edit Ingredient" : "Add New Ingredient"}</h3>
                     <input type="text" name="name" placeholder="Coffee Name" value={form.name} onChange={handleChange} />
                     <input type="text" name="origin" placeholder="Origin" value={form.origin} onChange={handleChange} />
-                    <input type="number" name="quantity" placeholder="Quantity" value={form.quantity} onChange={handleChange} />
+                    <input type="number" name="quantity" min="0" placeholder="Quantity" value={form.quantity} onChange={handleQuantityChange} />
                     <input type="text" name="supplier" placeholder="Supplier" value={form.supplier} onChange={handleChange} />
-                    <input type="number" name="transportTime" placeholder="Transport Days" value={form.transportTime} onChange={handleChange} />
+                    <input type="number" name="transportTime" min="0" placeholder="Transport Days" value={form.transportTime} onChange={handleTransportChange} />
                     <div className="modal-actions">
                       <button className="cancel-btn" onClick={handleCancel}>Cancel</button>
                       <button className="save-btn" onClick={editId ? updateProduct : addProduct}>
@@ -297,14 +370,19 @@ const updateProduct = async () => {
                 </select>
               </div>
             </div>
-
-            <div className="inventory-wrapper">
-              {filteredProducts.length === 0 ? (
-                <div className="no-results"><p>No ingredients found matching your search.</p></div>
-              ) : (
-                <ProductList products={filteredProducts} onDelete={deleteProduct} onEdit={editProduct} />
-              )}
-            </div>
+<div className="inventory-wrapper">
+  {products.length === 0 ? (
+    <div className="no-results">
+      <p>No ingredients found matching your search.</p>
+    </div>
+  ) : (
+    <ProductList
+      products={products}
+      onDelete={deleteProduct}
+      onEdit={editProduct}
+    />
+  )}
+</div>
           </div>
         )}
 
@@ -315,6 +393,27 @@ const updateProduct = async () => {
         {currentTab === "analytics" && (
           <Analytics products={products} />
         )}
+       <div style={{ marginTop: "16px", display: "flex", gap: "10px", alignItems: "center" }}>
+  <button
+    className="bt"
+    disabled={page === 1}
+    onClick={() => setPage((p) => p - 1)}
+  >
+    Prev
+  </button>
+
+  <span className="pg">
+    Page {page} of {totalPages || 1}
+  </span>
+
+  <button
+    className="bt"
+    disabled={page >= totalPages}
+    onClick={() => setPage((p) => p + 1)}
+  >
+    Next
+  </button>
+</div>
       </main>
     </div>
   );

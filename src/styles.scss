@@ -258,8 +258,8 @@ table {
 }
 
 th {
-  padding: 12px 20px;
-  text-align: left;
+  padding: 12px 20px !important; /* Устанавливаем точный боковой отступ 20px, как у твоих td */
+  text-align: left !important;   /* Принудительно выравниваем текст по левому краю ячейки */
   color: $muted;
   font-size: 12px;
   font-weight: 600;
@@ -268,7 +268,9 @@ th {
   opacity: 0.6;
   border: none;
 }
-
+td {
+  text-align: left !important;
+}
 td {
   padding: 18px 20px;
   color: $text;
@@ -670,4 +672,52 @@ td button {
   padding: 4px 8px;
   border-radius: 4px;
   font-weight: 600;
+}
+/* ===== ЦЕНТРИРОВАНИЕ И СТИЛИЗАЦИЯ ПАГИНАЦИИ ===== */
+main > div[style*="margin-top: 16px"] {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 16px !important;
+  margin: 32px auto 0 auto !important;
+  padding: 12px 24px;
+  background: $panel;
+  border-radius: 12px;
+  width: fit-content;
+  border: 1px solid rgba(255, 255, 255, 0.02);
+
+  /* Номер страницы */
+  .pg {
+    color: $muted;
+    font-weight: 500;
+    font-size: 14px;
+  }
+
+  /* Кнопки Prev и Next */
+  .bt {
+    background: $card;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    color: $text;
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: rgba(192, 138, 91, 0.08);
+      color: $brown;
+      border-color: rgba(192, 138, 91, 0.2);
+    }
+  }
+}
+.bt:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.bt:disabled:hover {
+  background: inherit;
 }
