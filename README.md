@@ -26,7 +26,7 @@ The frontend communicates with Supabase through its client SDK to manage authent
 - **React**: Primary UI framework.
 - **TypeScript**: Static typing for robust code.
 - **Vite**: Build tool for fast development.
-- **Tailwind CSS**: Responsive interface design.
+- **SCSS**: Flexible UI design using preprocessor.
 
 ### Backend & Database
 - **Supabase** – backend-as-a-service (authentication, database, API)
@@ -68,11 +68,16 @@ All data operations (CRUD) are performed through Supabase client methods, which 
 
 Example:
 ```ts
-supabase.from("products").select("*")
+supabase
+  .from("products")
+  .select("id, name, origin, quantity, supplier, transport_time")
+  .eq("user_id", user.id)
 ```
 Security (RLS)
 
-The application uses Row Level Security (RLS) provided by Supabase.
+The database schema and RLS policies are versioned in the repository in `/database.sql`.
+The Supabase project is configured to match these policies, and Row Level Security is enabled for all operations on the `products` table.
+All CRUD operations in the application are restricted by `user_id` filtering and enforced through Supabase authentication.
 
 This ensures that:
 
@@ -156,6 +161,9 @@ Authentication → URL Configuration → Add your Vercel domain
 Add:
 
 https://coffee-erp-six.vercel.app
+
+## Requirements
+- Node.js v24.15.0
 
 ## Logic Highlights
 The application uses strict typing for delivery statuses. Main statuses: In Transit, Delivered. The system automatically tracks transit time and updates dashboard information, ensuring data consistency. Testing the functionality has been verified through manual testing:
